@@ -1,3 +1,5 @@
+# ----------------- SETUP -----------------
+
 cmake_minimum_required(VERSION 3.12)
 
 set(PICO_SDK_PATH "/home/pi/src-code/pico/pico-sdk")
@@ -25,17 +27,25 @@ add_compile_options(-Wall
         -Wno-maybe-uninitialized
         )
 
-add_executable(pico_fakefire)
+# ----------------- PROJECT -----------------
 
+# build the receive libraries
+add_subdirectory(nec_receive_library)
+
+# create generated folder
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
+
+add_executable(pico_fakefire main.c)
 
 pico_generate_pio_header(pico_fakefire ${CMAKE_CURRENT_LIST_DIR}/ws2811.pio OUTPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/generated)
 
-target_sources(pico_fakefire PRIVATE main.c)
+#target_sources(pico_fakefire LINK_PUBLIC main.c)
 
-# pull in common dependencies and additional pwm hardware support
-target_link_libraries(pico_fakefire PRIVATE pico_stdlib hardware_pio)
-pico_add_extra_outputs(pico_fakefire)
+# pull in common dependencies and additional pwm hardware support - 
+target_link_libraries(pico_fakefire LINK_PUBLIC pico_stdlib hardware_pio nec_receive_library)
+
+pico_enable_stdio_usb(pico_fakefire 1)
+pico_enable_stdio_uart(pico_fakefire 0)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(pico_fakefire)
