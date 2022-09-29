@@ -16,8 +16,6 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.3.0")
     message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.3.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-# set(PICO_EXAMPLES_PATH ${PROJECT_SOURCE_DIR})
-
 # Initialize the SDK
 pico_sdk_init()
 
@@ -29,23 +27,23 @@ add_compile_options(-Wall
 
 # ----------------- PROJECT -----------------
 
-# build the receive libraries
+# build the led libraries
+add_subdirectory(ws2811_library)
+
+# build the IR receive libraries
 add_subdirectory(nec_receive_library)
 
-# create generated folder
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
+# Build uart commands libraries
+add_subdirectory(DFPlayer_library)
 
 add_executable(pico_fakefire main.c)
 
-pico_generate_pio_header(pico_fakefire ${CMAKE_CURRENT_LIST_DIR}/ws2811.pio OUTPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/generated)
-
-#target_sources(pico_fakefire LINK_PUBLIC main.c)
-
 # pull in common dependencies and additional pwm hardware support - 
-target_link_libraries(pico_fakefire LINK_PUBLIC pico_stdlib hardware_pio nec_receive_library)
+target_link_libraries(pico_fakefire LINK_PUBLIC pico_stdlib ws2811_library nec_receive_library DFPlayer_library)
 
-pico_enable_stdio_usb(pico_fakefire 1)
-pico_enable_stdio_uart(pico_fakefire 0)
+#usb debug on uart0
+#pico_enable_stdio_usb(pico_fakefire 1)
+#pico_enable_stdio_uart(pico_fakefire 0)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(pico_fakefire)

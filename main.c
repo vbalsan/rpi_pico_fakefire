@@ -1,30 +1,20 @@
 /**
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "globals.h"
 #include "values.h"
+
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
 
-#include "generated/ws2811.pio.h"
-
+#include "ws2811_library/generated/ws2811.pio.h"
 #include "nec_receive_library/nec_receive.h"
-
-#define IS_RGBW false
-#define NUM_PIXELS 50
-
-#ifdef PICO_DEFAULT_WS2811_PIN
-#define WS2811_PIN PICO_DEFAULT_WS2812_PIN
-#else
-// default to pin 2 if the board doesn't have a default WS2811 pin defined
-#define WS2811_PIN 2
-#endif
+#include "DFPlayer_library/DFPlayerCommands.h"
 
 
 // Here we are writing 32-bit values into the FIFO, one at a time, directly from the CPU. pio_sm_put_blocking is a helper
@@ -43,6 +33,13 @@ int main() {
 
     stdio_init_all();
 
+    uart_init(UART_ID, BAUD_RATE);
+
+    // Set the TX and RX pins by using the function select on the GPIO
+    // Set datasheet for more information on function select
+    gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
+
     // for ws2811
     PIO pio2811 = pio0;
     int sm = 0;
@@ -50,7 +47,7 @@ int main() {
 
     // for ir
     PIO pioIR = pio1;                                 
-    uint rx_gpio = 15;                              
+    uint rx_gpio = IR_GPIO;                              
     int rx_sm = nec_rx_init(pioIR, rx_gpio);         // uses one state machine and 9 instructions
 
 
@@ -117,7 +114,7 @@ int main() {
 
         
         // Check if remote has sent message
-        while (!pio_sm_is_rx_fifo_empty(pioIR, rx_sm)) 
+        while (!pio_sm_is_rx_fifo_empty(pioIR, rx_sm))
         {
             uint32_t rx_frame = pio_sm_get(pioIR, rx_sm);
 

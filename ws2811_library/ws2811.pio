@@ -53,8 +53,6 @@ bitloop:
 ; - x (one of two scratch registers; the other imaginatively called y) is the destination of the write data. State machines
 ;   use their scratch registers to hold and compare temporary data.
 ; - side 0: Drive low (0) the pin configured for side-set.
-; - Everything after the ; character is a comment. Comments are ignored by the assembler: they are just notes for
-;   humans to read.
 
 ; So, the state machine will do the following operations when it executes this instruction:
 ; 1. Set 0 on the side-set pin (this happens even if the instruction stalls because no data is available in the OSR)
@@ -73,9 +71,9 @@ bitloop:
 ; 3. We delay T1 - 1 after the instruction (whether the branch is taken or not)
 
 ; at this moment here is what we got on the pin :
-;      <--T3---><------T1------->
-;               _________________
-; GPIO ________/
+;      <---T3---><-T1->
+;                ______
+; GPIO _________/
 
 
 ; Next Line :
@@ -92,9 +90,9 @@ do_one:
 ; 3. Delay for T2 - 1 cycles after the instruction
 
 ; We should now have this if it was 1 :
-;      <--T3---><------T1------><----T2---->
-;               ____________________________
-; GPIO ________/                            \__
+;      <---T3---><-T1-><------T2----->
+;                _____________________
+; GPIO _________/                     \__
 
 
 ; Next Line :
@@ -107,9 +105,9 @@ do_zero:
 ; 3. The instruction takes T2 cycles in total
 
 ; We should now have this if it was 0 :
-;      <--T3---><------T1------><----T2---->
-;               ________________
-; GPIO ________/                \_____________
+;      <---T3---><-T1-><-------T2------>
+;                ______
+; GPIO _________/      \_______________
 
 
 

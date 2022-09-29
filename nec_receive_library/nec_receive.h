@@ -1,7 +1,4 @@
 /**
- * Copyright (c) 2021 mjcross
- *
- * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include "pico/stdlib.h"
