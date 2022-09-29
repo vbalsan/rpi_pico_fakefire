@@ -1,12 +1,12 @@
 
 # create generated folder
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/ws2811_library/generated)
+#file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/ws2811_library/generated)
 
 # build a normal library
 add_library(ws2811_library ${CMAKE_CURRENT_LIST_DIR}/ws2811.c)
 
 # invoke pio_asm to assemble the state machine program
-pico_generate_pio_header(ws2811_library ${CMAKE_CURRENT_LIST_DIR}/ws2811.pio OUTPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/generated)
+pico_generate_pio_header(ws2811_library ${CMAKE_CURRENT_LIST_DIR}/ws2811.pio)
 
 
 target_link_libraries(ws2811_library PRIVATE pico_stdlib hardware_pio)

@@ -9,23 +9,12 @@
 #include "values.h"
 
 #include "pico/stdlib.h"
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
 
-#include "ws2811_library/generated/ws2811.pio.h"
 #include "nec_receive_library/nec_receive.h"
 #include "DFPlayer_library/DFPlayerCommands.h"
+#include "ws2811_library/ws2811.h"
 
 
-// Here we are writing 32-bit values into the FIFO, one at a time, directly from the CPU. pio_sm_put_blocking is a helper
-// method that waits until there is room in the FIFO before pushing your data.
-static inline void put_pixel(uint32_t pixel_grb) {
-    pio_sm_put_blocking(pio0, 0, pixel_grb);
-}
-
-static inline uint32_t ugrb_u32(uint8_t g, uint8_t r, uint8_t b) {
-    return ((uint32_t) (g) << 8) | ((uint32_t) (r) << 16) | ((uint32_t) (b) << 24 );
-}
 
 
 
@@ -40,10 +29,11 @@ int main() {
     gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
 
-    // for ws2811
+    // for leds
     PIO pio2811 = pio0;
-    int sm = 0;
-    uint offset = pio_add_program(pio2811, &ws2811_program);
+    int ws2811sm = 0;
+    int ws2811_offset = ws2811_init(pio2811, ws2811sm);
+    
 
     // for ir
     PIO pioIR = pio1;                                 
@@ -51,13 +41,13 @@ int main() {
     int rx_sm = nec_rx_init(pioIR, rx_gpio);         // uses one state machine and 9 instructions
 
 
-    if (offset == -1 || rx_sm == -1) {
+    if (ws2811_offset == -1 || rx_sm == -1) {
         printf("could not configure PIO\n");
         return -1;
     }
 
 
-    ws2811_program_init(pio2811, sm, offset, WS2811_PIN, 800000);
+    
 
     uint8_t gidx = 0;
     uint8_t ridx = 0;    
@@ -157,31 +147,6 @@ int main() {
             }
         }
 
-
-        /*
-        g = 0;
-        r = 255;
-        b = 0;
-        pixel = ugrb_u32( g,  r,  b);
-
-        for (int i = 0; i < NUM_PIXELS; ++i) 
-        {            
-           put_pixel(pixel);
-        }
-        sleep_ms(2000);
-
-
-        g = 0;
-        r = 0;
-        b = 255;
-        pixel = ugrb_u32( g,  r,  b);
-
-        for (int i = 0; i < NUM_PIXELS; ++i) 
-        {            
-           put_pixel(pixel);
-        }
-        sleep_ms(2000);
-        */
 
     }
 }

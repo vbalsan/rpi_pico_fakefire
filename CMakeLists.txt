@@ -27,19 +27,19 @@ add_compile_options(-Wall
 
 # ----------------- PROJECT -----------------
 
-# build the led libraries
-add_subdirectory(ws2811_library)
-
 # build the IR receive libraries
 add_subdirectory(nec_receive_library)
 
 # Build uart commands libraries
 add_subdirectory(DFPlayer_library)
 
+# build the led libraries
+add_subdirectory(ws2811_library)
+
 add_executable(pico_fakefire main.c)
 
 # pull in common dependencies and additional pwm hardware support - 
-target_link_libraries(pico_fakefire LINK_PUBLIC pico_stdlib ws2811_library nec_receive_library DFPlayer_library)
+target_link_libraries(pico_fakefire LINK_PUBLIC pico_stdlib hardware_pio ws2811_library nec_receive_library DFPlayer_library)
 
 #usb debug on uart0
 #pico_enable_stdio_usb(pico_fakefire 1)

@@ -1,6 +1,4 @@
 #include "pico/stdlib.h"
-#include "hardware/uart.h"
-
 #include "../globals.h"
 
 # define DFP_START      0x7E  

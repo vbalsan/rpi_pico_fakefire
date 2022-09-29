@@ -1,4 +1,5 @@
 #include "DFPlayerCommands.h"
+#include "hardware/uart.h"
 
 uint8_t highByte(uint16_t value)
 {
