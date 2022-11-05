@@ -18,71 +18,67 @@
 
 
 
-int main() {
+int main() 
+{
+    uart_on   = false;                  // flag for uart errors
+    ws2811_on = false;                  // flag for leds errors
+
+    uint32_t rx_frame;                  // For IR frame, 32 bits message    
+    uint8_t  rx_address, rx_data;       // received IR data
+
+    uint8_t main_idx = 0;               // Index for main array of values
+
+    uint8_t main_val   = 0;             // main_val is equal to the current value in array
+    uint8_t main_val10 = 0;             // same as main_val but divided by 10
+    uint8_t main_val50 = 0;             // same as main_val but divided by 50
+
+    uint8_t *pGreenVal;                 // Pointer to the value of green (can be full, /10 or /50)
+    uint8_t *pRedVal;                   // Pointer to the value of red (can be full, /10 or /50)
+    uint8_t *pBlueVal;                  // Pointer to the value of blue (can be full, /10 or /50)
+
+    pGreenVal   = &main_val10;          //
+    pRedVal     = &main_val;            // Default assignation to red colour
+    pBlueVal    = &main_val50;          //
+
+    uint32_t pixel;                     // 32 bits value passed to the PIO state machine
 
     stdio_init_all();
 
-    uart_init(UART_ID, BAUD_RATE);
+    Serial_init(UART_ID,                //
+                BAUD_RATE,              // for serial
+                UART_TX_PIN,            //
+                UART_RX_PIN);           // 
 
-    // Set the TX and RX pins by using the function select on the GPIO
-    // Set datasheet for more information on function select
-    gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
-    gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
+    Leds_init(WS2811_PIO, WS2811_PIN);  // for leds       
 
-    // for leds
-    PIO pio2811 = pio0;
-    int ws2811sm = 0;
-    int ws2811_offset = ws2811_init(pio2811, ws2811sm);
+    IR_init(IR_PIO, IR_GPIO);           // for ir    
     
 
-    // for ir
-    PIO pioIR = pio1;                                 
-    uint rx_gpio = IR_GPIO;                              
-    int rx_sm = nec_rx_init(pioIR, rx_gpio);         // uses one state machine and 9 instructions
-
-
-    if (ws2811_offset == -1 || rx_sm == -1) {
-        printf("could not configure PIO\n");
-        return -1;
-    }
-
-
-    
-
-    uint8_t gidx = 0;
-    uint8_t ridx = 0;    
-    uint8_t bidx = 0;
-
-    uint8_t main_val   = 0;
-    uint8_t main_val10 = 0;
-    uint8_t main_val50 = 0;
-
-    uint8_t *g, *r, *b;
-    g = &main_val10;
-    r = &main_val;    
-    b = &main_val50;
-
-    uint32_t pixel;
-
-    // transmit and receive frames
-    uint8_t rx_address, rx_data;
-
-    while (1) 
+    while (!error_code) 
     {
-        main_val = red_arr_breathing_2[++ridx]; 
-        main_val10 = main_val / 10u;
-        main_val50 = main_val / 50u;
+        //main_val   = red_arr[++main_idx]; 
+        //main_val10 = main_val / 10u;
+        //main_val50 = main_val / 50u;
 
-        pixel = ugrb_u32( *g,  *r,  *b);
+        //pixel = ugrb_u32( *pGreenVal,  *pRedVal,  *pBlueVal);
+        
 
-        for (int i = 0; i < NUM_PIXELS -1; ++i) 
-        {            
-           //put_pixel(pixel);
-           put_pixel(0);
+        for (uint8_t i = 0; i < NUM_PIXELS; i++) 
+        {  
+            uint8_t idx = main_idx + i;
+            main_val   = red_arr2[idx]; 
+            main_val10 = main_val / 16u;
+            main_val50 = main_val / 64u;
+
+            pixel = ugrb_u32( *pGreenVal,  *pRedVal,  *pBlueVal);          
+            put_pixel(pixel);
+            //put_pixel(0);
         }
-        put_pixel(pixel);
+        //put_pixel(pixel);
+        main_idx++;
+        // make a break to lock the pixels       
+        sleep_ms(50);
 
-        sleep_ms(35);
         
         //r = 255;
         //g = 25;
@@ -104,49 +100,84 @@ int main() {
 
         
         // Check if remote has sent message
-        while (!pio_sm_is_rx_fifo_empty(pioIR, rx_sm))
+        while (!is_there_message())
         {
-            uint32_t rx_frame = pio_sm_get(pioIR, rx_sm);
-
+            rx_frame = get_message();
             if (nec_decode_frame(rx_frame, &rx_address, &rx_data)) 
             {
-                printf("\t\nreceived: %02x, %02x", rx_address, rx_data);
+                //printf("\t\nreceived: %02x, %02x", rx_address, rx_data);
                 if(rx_address == 0x00)
                 {
                     switch (rx_data)
                     {
                     case 0x45:
-                        g = &main_val10;
-                        r = &main_val;    
-                        b = &main_val50;
+                        pGreenVal = &main_val10;
+                        pRedVal = &main_val;    
+                        pBlueVal = &main_val50;
                         break;
 
                     case 0x44:
-                        r = &main_val10;
-                        g = &main_val;    
-                        b = &main_val50;
+                        pRedVal = &main_val10;
+                        pGreenVal = &main_val;    
+                        pBlueVal = &main_val50;
                         break;
 
                     case 0x07:
-                        g = &main_val10;
-                        b = &main_val;    
-                        r = &main_val50;
+                        pGreenVal = &main_val10;
+                        pBlueVal = &main_val;    
+                        pRedVal = &main_val50;
                         break;
                     
                     default:
-                        g = &main_val10;
-                        r = &main_val;    
-                        b = &main_val50;
+                        pGreenVal = &main_val10;
+                        pRedVal = &main_val;    
+                        pBlueVal = &main_val50;
                         break;
                     }
                 }
             } 
             else 
             {
-                printf("\treceived: %08x", rx_frame);
+                printf("\t received: %08x", rx_frame);
             }
         }
 
 
     }
+
+    // out of while, error happened
+    if(uart_on)
+    {
+
+    }
+
+    if(ws2811_on)
+    {
+
+    }
+
+    switch (error_code)
+    {
+    case SM_WS2811:
+        
+        break;
+
+    case PROG_WS2811:
+        break;
+
+    case SM_IR:
+        break;
+    
+    case PROG_IR:
+        break;
+
+    case UART:
+        break;
+
+    default:
+        break;
+    }
+
+
+
 }

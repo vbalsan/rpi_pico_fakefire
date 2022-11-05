@@ -9,4 +9,4 @@
 
 
  void DFP_Send(uint8_t CMD, uint8_t Par1, uint8_t Par2);  
- 
+ void Serial_init(uart_inst_t *uart_id,uint32_t baudrate,uint8_t tx_pin,uint8_t rx_pin);

@@ -1,7 +1,5 @@
 /**
- * Copyright (c) 2021 mjcross
- *
- * SPDX-License-Identifier: BSD-3-Clause
+ * 
  */
 
 // SDK types and declarations
@@ -14,6 +12,17 @@
 // import the assembled PIO state machine program
 #include "nec_receive.pio.h"
 
+void IR_init(PIO pioIR, uint8_t rx_gpio)
+{
+    //PIO pioIR = IR_PIO;                                 
+    //uint rx_gpio = IR_GPIO;                              
+    rx_sm = nec_rx_init(pioIR, rx_gpio);         // uses one state machine and 9 instructions
+
+    if(rx_sm == -1)
+    {
+        error_code = SM_IR;
+    }
+}
 // Claim an unused state machine on the specified PIO and configure it
 // to receive NEC IR frames on the given GPIO pin.
 //
@@ -25,10 +34,13 @@ int nec_rx_init(PIO pio, uint pin_num) {
 
     // install the program in the PIO shared instruction space
     uint offset;
-    if (pio_can_add_program(pio, &nec_receive_program)) {
+    if (pio_can_add_program(pio, &nec_receive_program)) 
+    {
         offset = pio_add_program(pio, &nec_receive_program);
-    } else {
-        return -1;      // the program could not be added
+    } 
+    else 
+    {
+        error_code = PROG_IR;      // the program could not be added
     }
 
     // claim an unused state machine on this PIO
@@ -76,4 +88,14 @@ bool nec_decode_frame(uint32_t frame, uint8_t *p_address, uint8_t *p_data) {
     *p_data = f.data;
 
     return true;
+}
+
+bool is_there_message()
+{
+    return pio_sm_is_rx_fifo_empty(IR_PIO, rx_sm);
+}
+
+uint32_t get_message()
+{
+    return pio_sm_get(IR_PIO, rx_sm);
 }
