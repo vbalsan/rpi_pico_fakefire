@@ -90,7 +90,7 @@ bool nec_decode_frame(uint32_t frame, uint8_t *p_address, uint8_t *p_data) {
     return true;
 }
 
-bool is_there_message()
+bool is_fifo_empty()
 {
     return pio_sm_is_rx_fifo_empty(IR_PIO, rx_sm);
 }
