@@ -19,6 +19,7 @@ void DFP_PlayTrack(uint8_t folder, uint8_t track);
 void DFP_PlayOrPause();
 void DFP_Stop();
 void DFP_Reset();
+void DFP_SetBass();
 
 void DFP_SetVolume(uint8_t vol);
 void DFP_IncreaseVolume();

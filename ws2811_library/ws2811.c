@@ -6,11 +6,10 @@
 
 void Leds_init(PIO pio2811, uint8_t ws2811LedsPin)
 {
-    //PIO pio2811 = pioLeds;
-    // claim an unused state machine on this PIO
-    ws2811sm = pio_claim_unused_sm(pio2811, true);
+    ws2811pio = pio2811;                                                // keep PIO ref    
+    ws2811sm = pio_claim_unused_sm(pio2811, true);                      // claim an unused state machine on this PIO
     if (ws2811sm == -1) {
-        error_code = SM_WS2811;      // we were unable to claim a state machine
+        error_code = SM_WS2811;                                         // we were unable to claim a state machine
     }
 
     ws2811_init(pio2811, ws2811sm, ws2811LedsPin);

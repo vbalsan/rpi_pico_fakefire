@@ -47,7 +47,7 @@ void set_power_leds(bool mosfet_val)
 {
     if (mosfet_val)
     {
-        
+        gpio_put(FET_PIN, 1);
     }
     else
     {
@@ -55,7 +55,7 @@ void set_power_leds(bool mosfet_val)
         {          
             put_pixel(0);
         }
-        // Need command for MOSFET
+        gpio_put(FET_PIN, 0);
     }
 }
 
@@ -69,6 +69,7 @@ void process_rx_data(uint8_t rx_data)
 
         if(SysActive)
         {
+            gpio_put(SYSLED, 1);
             set_power_leds(true);   // turn on MOSFET
             sleep_ms(20);
             SetRed();
@@ -76,6 +77,7 @@ void process_rx_data(uint8_t rx_data)
         }
         else 
         {
+            gpio_put(SYSLED, 0);
             set_power_leds(false);  // stop MOSFET
             DFP_Main_Stop();
         }        
@@ -173,24 +175,57 @@ void ir_receive_and_exec()
     }
 }
 
+void adjust_light(uint8_t *main_val, uint8_t *main_val10, uint8_t *main_val50, uint8_t luminosity)
+{
+    uint16_t tempvar = 0;
+
+    tempvar = (uint16_t)(*main_val * (luminosity + 1));
+    *main_val = tempvar >> 8;
+
+    tempvar = (uint16_t)(*main_val10 * (luminosity + 1));
+    *main_val10 = tempvar >> 8;
+
+    tempvar = (uint16_t)(*main_val50 * (luminosity + 1));
+    *main_val50 = tempvar >> 8;
+}
 
 
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
 int main() 
 {
-    SysActive  = false;                         // System is "off", trigger or not the MOSFET
+    sleep_ms(3000);                            // Some time for peripherals to get ready
+    gpio_init(FET_PIN);
+    gpio_set_dir(FET_PIN, GPIO_OUT);
+    
+    SysActive  = true;                         // System is "off", trigger or not the MOSFET
     error_code = NO_ERROR;      
-    //set_power_leds(false);                      // stop MOSFET
+    set_power_leds(true);                      // MOSFET
 
     uart_on   = false;                          // flag for uart errors
     ws2811_on = false;                          // flag for leds errors    
 
     uint8_t main_idx = 0;                       // Index for main array of values    
+    uint8_t luminosity = 0;
 
     pGreenVal   = &main_val10;                  //
     pRedVal     = &main_val;                    // Default assignation to red colour
     pBlueVal    = &main_val50;                  //
 
     uint32_t pixel;                             // 32 bits value passed to the PIO state machine
+
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+
+    
+    
+    gpio_init(SYSLED);
+    gpio_set_dir(SYSLED, GPIO_OUT);
+    gpio_put(SYSLED, 1);
+
+    gpio_init(ERROR_LED);
+    gpio_set_dir(ERROR_LED, GPIO_OUT);
 
     stdio_init_all();       
 
@@ -205,9 +240,18 @@ int main()
 
 
     DFP_Init();                                 // Initialization of DFPlayer
+    sleep_ms(3000);
     DFP_SetVolume(0x00);                        // Volume at 0x00/0x30
 
+/*****/
+    sleep_ms(1000);
+    SetRed();
+    
+    DFP_Main_Start();
+    DFP_SetBass();
+    DFP_SetVolume(0x30);
 
+/*****/
     while (!error_code)                         // Main loop, if no error
     {
         /********* LOOP FOR OFF *********/
@@ -220,24 +264,56 @@ int main()
         /********* LOOP FOR ON *********/
         while(SysActive)                        // If system is on
         {
-            for (uint8_t i = 0; i < NUM_PIXELS; i++) 
+
+            for (uint8_t i = 0; i < 3; i++) // Yellow
             {  
                 uint8_t idx = main_idx + i;
-                main_val   = red_arr2[idx]; 
-                main_val10 = main_val / 16u;
-                main_val50 = main_val / 64u;
+                main_val   = yellow_array_dec[idx]; 
+                main_val10 = main_val / 2u;
+                main_val50 = main_val / 5u;
+
+                if (luminosity != 0xFF)
+                {
+                    adjust_light(&main_val, &main_val10, &main_val50, luminosity);
+                }
 
                 pixel = ugrb_u32( *pGreenVal,  
                                   *pRedVal,  
                                   *pBlueVal);          
                 put_pixel(pixel);
             }
+            for (uint8_t i = 0; i < (NUM_PIXELS - 3); i++) // Red
+            {  
+                uint8_t idx = main_idx + i;
+                main_val   = red_arr[idx]; 
+                main_val10 = main_val / 16u;
+                main_val50 = main_val / 64u;
+
+                if (luminosity != 0xFF)
+                {
+                    adjust_light(&main_val, &main_val10, &main_val50, luminosity);
+                }
+
+                pixel = ugrb_u32( *pGreenVal,  
+                                  *pRedVal,  
+                                  *pBlueVal);          
+                put_pixel(pixel);
+            }
+            
             main_idx++;
                    
+            gpio_put(PICO_DEFAULT_LED_PIN, 0);
             sleep_ms(50);                       // make a break to lock the pixels        
+            gpio_put(PICO_DEFAULT_LED_PIN, 1);
             
             ir_receive_and_exec();              // Check if remote has sent message
+
+            if (luminosity != 0xFF)
+            {
+                luminosity++;
+            }
         }
+        luminosity = 0;
     }
 
     /**********************************/
@@ -257,7 +333,11 @@ int main()
     {    
         switch (error_code)
         {
-            case SM_WS2811:            
+            case SM_WS2811:
+                gpio_put(ERROR_LED, 1);
+                sleep_ms(50);                       
+                gpio_put(ERROR_LED, 0);
+                
                 break;
 
             case PROG_WS2811:

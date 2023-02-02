@@ -52,6 +52,11 @@ void DFP_PlayOrPause()
     }
 }
 
+void DFP_SetBass()
+{
+    DFP_Send(0x07,0x00,0x05);
+    sleep_ms(30);
+}
 
 void DFP_Stop()
 {
@@ -164,7 +169,7 @@ void DFP_SetVolume(uint8_t vol)
         DFP_Send(0x06,0x00,0x30);   // Volume max
         sleep_ms(30);
     }
-    main_volume = vol;
+    //main_volume = vol;
 }
 
 
@@ -206,7 +211,7 @@ void DFP_Send(uint8_t Command, uint8_t Par1, uint8_t Par2)
 void DFP_Main_Start()
 {
     DFP_SelectSDCard();    
-    DFP_SetVolume(0x10);
+    DFP_SetVolume(0x20);
     DFP_PlayTrack(1,1);
     playback = true;
 }

@@ -5,6 +5,7 @@
 #include "hardware/pio.h"
 
 int ws2811sm;
+PIO ws2811pio;
 
 void ws2811_init(PIO pio2811, int sm, uint8_t ws2811LedsPin);
 void Leds_init(PIO pio2811, uint8_t ws2811LedsPin);
@@ -13,7 +14,7 @@ void Leds_init(PIO pio2811, uint8_t ws2811LedsPin);
 // method that waits until there is room in the FIFO before pushing your data.
 static inline void put_pixel(uint32_t pixel_grb) 
 {
-    pio_sm_put_blocking(WS2811_PIO, ws2811sm, pixel_grb);
+    pio_sm_put_blocking(ws2811pio, ws2811sm, pixel_grb);
 }
 
 static inline uint32_t ugrb_u32(uint8_t g, uint8_t r, uint8_t b) 

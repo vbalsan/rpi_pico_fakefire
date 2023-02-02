@@ -3,8 +3,17 @@
 
 #include "pico/stdlib.h"
 
+//FET
+#define FET_PIN         14
+
+//ERROR LED
+#define ERROR_LED       19
+
+//SYSLED
+#define SYSLED          20
+
 //leds
-//#define IS_RGBW         false
+//#define IS_RGBW       false
 #define NUM_PIXELS      50
 #define WS2811_PIN      15
 #define WS2811_PIO      pio0
@@ -20,7 +29,7 @@
 #define UART_TX_PIN     16
 #define UART_RX_PIN     17
 
-uint8_t                 main_volume;
+//uint8_t                 main_volume;
 
 bool                    SysActive;
 
