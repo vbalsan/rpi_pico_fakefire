@@ -29,7 +29,7 @@ First prototype was on a... prototype board, but decided to go real PCB with Kic
 PCB in 3D on Kicad
 
 
-![alt text](/img/"WhatsApp Image 2023-01-16 at 6.30.35 PM.jpeg")
+![alt text](/img/PCB_reception.jpeg)
 PCB received
 
 
