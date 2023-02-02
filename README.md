@@ -1,5 +1,46 @@
 # rpi_pico_fakefire
 
+This is the electric fireplace project.
+
+Main goal is to have this :
+![alt text](/img/fire.png)
+Idea came after landlord decided that we could not use our fireplace anymore, and didn't want to pay 400-500 bucks for an electric one.
+
+The trick is to use foam (the kind you can find at reno store for filling cracks and holes) with lights, of course since just simple Christmas lights don't twinkle, I wanted to use a microcontroller with leds.
+
+After several tests, I abandonned the leds for a led strip, better to handle... 
+Used ATtiny85 at the beginning, but the 10MHz versions I have cannot manage the 800 or 400kHz ws2811 chips.
+
+In the end, a raspberry pico is much better for the project, the PIOs can handle IR reception without stopping the stream of light, and I could write a program to manage the lights.
+
+
+Analysis for the signal controlling the ws2811 :
+
+![alt text](/img/analyze.jpg)
+
+![alt text](/img/analyze2.jpg)
+
+This gave me the occasion to create libraries for the IR receiver (TSOP1838B) and the ws2811
+
+
+First prototype was on a... prototype board, but decided to go real PCB with Kicad and JLCPCB, result :
+
+![alt text](/img/ff_pcb_3d.png)
+PCB in 3D on Kicad
+
+
+![alt text](/img/WhatsApp Image 2023-01-16 at 6.30.35 PM.jpeg)
+PCB received
+
+
+![alt text](/img/IMG_20230127_171639_069.jpg)
+PCB almost fully populated
+
+So far, project is continuing... There are issues on IR reception, probably using 3 resistors to decrease the voltage from 5V to 3.3 for GPIO was not a good idea.
+Need to make some tests as I could not find the input impedance of the pico GPIO.
+
+
+
 Mapping buttons : 
 
 on off (top)                    menu
